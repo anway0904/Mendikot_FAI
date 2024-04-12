@@ -20,18 +20,21 @@ Card in previous trick played by opponent
 Card in previous trick played by teammate
 Card in trump suite
 
-CARD_FOR_PLAYING = 0
-CARD_IN_HAND = 1
-CARD_AVAILABLE = 2
-CARD_CURR_TRICK_AGENT = 3
-CARD_CURR_TRICK_OPPNT_1 = 4
-CARD_CURR_TRICK_TEAM = 5
-CARD_CURR_TRICK_OPPNT_2 = 6
-CARD_PREV_TRICK_AGENT = 7
-CARD_PREV_TRICK_OPPNT_1 = 8
-CARD_PREV_TRICK_TEAM = 9
-CARD_PREV_TRICK_OPPNT_1 = 10
-CARD_TRUMP = 11
+CARD_FOR_PLAYING        = 0
+CARD_IN_HAND_AGENT      = 1
+CARD_IN_HAND_OPPNT_1    = 2
+CARD_IN_HAND_TEAM       = 3
+CARD_IN_HAND_OPPNT_2    = 4
+CARD_AVAILABLE          = 5
+CARD_CURR_TRICK_AGENT   = 6
+CARD_CURR_TRICK_OPPNT_1 = 7
+CARD_CURR_TRICK_TEAM    = 8
+CARD_CURR_TRICK_OPPNT_2 = 9
+CARD_PREV_TRICK_AGENT   = 10
+CARD_PREV_TRICK_OPPNT_1 = 11
+CARD_PREV_TRICK_TEAM    = 12
+CARD_PREV_TRICK_OPPNT_2 = 13
+CARD_TRUMP              = 14
 
 52x10 matrix represents the entire game
 
@@ -56,20 +59,47 @@ import random
 from MACROS import *
 
 class Mendikot():
-    def __init__(self) -> None:
+    def __init__(self, cards_per_player: int = 4) -> None:
         self.cards_deck = 52
-        self.game_features = 12
+        self.game_features = 15
         self.game_matrix = np.zeros([self.cards_deck, self.game_features])
-        self.cards_per_player = 4
-        self.min_cards = ['T', 'A', 'K', 'Q']
+
+        assert (cards_per_player >= 4) and (cards_per_player <=13), "Invalid cards per player. Valid range of cards per player is [4, 13]"
+        self.cards_per_player = cards_per_player
+        
+        self.min_cards = [CARDS.index('T'), CARDS.index('A'), CARDS.index('K'), CARDS.index('Q')]
         
     def reset(self) -> tuple[np.ndarray, str]:
         """
         Resets and starts over the game. Distributes the cards specified by self.cards_per_player. 
         Minimum 4 cards per player (10, A, K, Q) followed by J, 10, 9, 8 ... 2
         """
-        self.game_matrix[]
+        self.game_matrix *= 0
+        self.game_matrix[CARD_IDX[self.min_cards,:].flatten(), CARD_FOR_PLAYING] = 1
         
+        trump_suit = np.random.choice(SUITS)
+        self.game_matrix[CARD_IDX[:,SUITS.index(trump_suit)], CARD_TRUMP] = 1
+
+        if self.cards_per_player > len(self.min_cards):
+            self.game_matrix[CARD_IDX[CARDS.index('J'),:], CARD_FOR_PLAYING] = 1
+            idx_e = len(CARDS) - (len(self.min_cards) + 1)
+            idx_s = idx_e - (self.cards_per_player - (len(self.min_cards) + 1))
+            self.game_matrix[CARD_IDX[idx_s:idx_e, :].flatten(), CARD_FOR_PLAYING] = 1 
+
+        total_cards_in_play = self.get_cards_in_play()
+        np.random.shuffle(total_cards_in_play)
+        print(total_cards_in_play)
+        
+        self.game_matrix[total_cards_in_play[0:self.cards_per_player], CARD_IN_HAND_AGENT]    = 1
+        self.game_matrix[total_cards_in_play[1*self.cards_per_player : 2*self.cards_per_player], CARD_IN_HAND_OPPNT_1]  = 1
+        self.game_matrix[total_cards_in_play[2*self.cards_per_player : 3*self.cards_per_player], CARD_IN_HAND_TEAM]     = 1
+        self.game_matrix[total_cards_in_play[3*self.cards_per_player : 4*self.cards_per_player], CARD_IN_HAND_OPPNT_2]  = 1
+
+        # raise NotImplementedError("Need to return state!!!!!!!!!!! Discuss what state should be")
+
+    def get_cards_in_play(self) -> tuple[int]:
+        idx = np.where(self.game_matrix[:,CARD_FOR_PLAYING] == 1)[0]
+        return idx
     
     def step(self, action: int, player_type: int):
         '''
@@ -96,12 +126,13 @@ class Mendikot():
 
     def update_game(self):
         
-        current_cards = np.where(self.game_matrix[:][CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2] == 1)
+        current_cards = np.where(self.game_matrix[:][CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2 + 1] == 1)
         if  len(current_cards) == 4:
             '''
             TRICK OVER 
             Update the score matrix
             '''
+
             for card in current_cards:
                 if self.game_matrix[card,CARD_CURR_TRICK_AGENT] == 1:
                     self.game_matrix[card,CARD_PREV_TRICK_AGENT] = 1

@@ -88,7 +88,6 @@ class Mendikot():
 
         total_cards_in_play = self.get_cards_in_play()
         np.random.shuffle(total_cards_in_play)
-        print(total_cards_in_play)
         
         self.game_matrix[total_cards_in_play[0:self.cards_per_player], CARD_IN_HAND_AGENT]    = 1
         self.game_matrix[total_cards_in_play[1*self.cards_per_player : 2*self.cards_per_player], CARD_IN_HAND_OPPNT_1]  = 1
@@ -101,6 +100,22 @@ class Mendikot():
         idx = np.where(self.game_matrix[:,CARD_FOR_PLAYING] == 1)[0]
         return idx
     
+    def get_cards_in_trick(self) -> tuple[int]:
+        idx = np.where(self.game_matrix[:,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1] == 1)[0]
+        return idx
+    
+    def get_cards_in_hand(self, player : int) -> tuple[int]:
+        if player == AGENT:
+            idx = np.where(self.game_matrix[:,CARD_IN_HAND_AGENT] == 1)[0]
+        if player == OPPONENT_1:
+            idx = np.where(self.game_matrix[:,CARD_IN_HAND_OPPNT_1] == 1)[0]
+        if player == OPPONENT_2:
+            idx = np.where(self.game_matrix[:,CARD_IN_HAND_OPPNT_2] == 1)[0]
+        if player == TEAMMATE:
+            idx = np.where(self.game_matrix[:,CARD_IN_HAND_TEAM] == 1)[0]
+
+        return idx
+    
     def step(self, action: int, player_type: int):
         '''
         action is a card from hand the agent should play
@@ -110,42 +125,61 @@ class Mendikot():
             a. card choosen 
             b. previously choosen card -> update its status - not sure
         '''
-        self.game_matrix[action, CARD_IN_HAND] = 0
-        self.game_matrix[action, CARD_AVAILABLE] = 0
-        self.game_matrix[action, CARD_CURR_TRICK_AGENT] = 1
+        
+        if action in self.get_cards_in_hand(player=player_type):
+            self.game_matrix[action, CARD_AVAILABLE] = 0
+            
+            if player_type == AGENT:
+                self.game_matrix[action, CARD_CURR_TRICK_AGENT] = 1
+                self.game_matrix[action, CARD_IN_HAND_AGENT] = 0
+                
+            if player_type == OPPONENT_1:
+                self.game_matrix[action, CARD_CURR_TRICK_OPPNT_1] = 1
+                self.game_matrix[action, CARD_IN_HAND_OPPNT_1] = 0
 
-        if player_type == AGENT:
-            self.game_matrix[action, CARD_CURR_TRICK_AGENT] = 1
-        elif player_type == OPPONENT_1:
-            self.game_matrix[action, CARD_CURR_TRICK_OPPNT_1] = 1
-        elif player_type == OPPONENT_2:
-            self.game_matrix[action, CARD_CURR_TRICK_OPPNT_2] = 1
+            if player_type == OPPONENT_2:
+                self.game_matrix[action, CARD_CURR_TRICK_OPPNT_2] = 1
+                self.game_matrix[action, CARD_IN_HAND_OPPNT_2] = 0
+
+            if player_type == TEAMMATE:
+                self.game_matrix[action, CARD_CURR_TRICK_TEAM] = 1
+                self.game_matrix[action, CARD_IN_HAND_TEAM] = 0
         else:
-            self.game_matrix[action, CARD_CURR_TRICK_TEAM] = 1
+            print(f"INVALID_ACTION : card not in hand for {player_type}")
         
 
     def update_game(self):
         
-        current_cards = np.where(self.game_matrix[:][CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2 + 1] == 1)
+        current_cards = self.get_cards_in_trick()
         if  len(current_cards) == 4:
             '''
             TRICK OVER 
             Update the score matrix
             '''
+            # self.game_matrix[current_cards,CARD_PREV_TRICK_AGENT] = 1
+            # self.game_matrix[current_cards,CARD_CURR_TRICK_AGENT] = 0
 
-            for card in current_cards:
-                if self.game_matrix[card,CARD_CURR_TRICK_AGENT] == 1:
-                    self.game_matrix[card,CARD_PREV_TRICK_AGENT] = 1
-                    self.game_matrix[card,CARD_CURR_TRICK_AGENT] = 0
-                elif self.game_matrix[card,CARD_CURR_TRICK_OPPNT_1] == 1:
-                    self.game_matrix[card,CARD_PREV_TRICK_OPPNT_1] = 1
-                    self.game_matrix[card,CARD_CURR_TRICK_OPPNT_1] = 0
-                elif self.game_matrix[card,CARD_CURR_TRICK_OPPNT_2] == 1:
-                    self.game_matrix[card,CARD_PREV_TRICK_OPPNT_2] = 1
-                    self.game_matrix[card,CARD_CURR_TRICK_OPPNT_2] = 0
-                else:
-                    self.game_matrix[card,CARD_PREV_TRICK_TEAM] = 1
-                    self.game_matrix[card,CARD_CURR_TRICK_TEAM] = 0                    
+            print(np.where(self.game_matrix[current_cards,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2] == 1)[0])
+
+            # print(np.where(self.game_matrix[current_cards,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2] == 1) == 1[0])
+            # self.game_matrix[current_cards,]
+
+            # for card in current_cards:
+            #     if self.game_matrix[card,CARD_CURR_TRICK_AGENT] == 1:
+            #         self.game_matrix[card,CARD_PREV_TRICK_AGENT] = 1
+            #         self.game_matrix[card,CARD_CURR_TRICK_AGENT] = 0
+
+            #     elif self.game_matrix[card,CARD_CURR_TRICK_OPPNT_1] == 1:
+            #         self.game_matrix[card,CARD_PREV_TRICK_OPPNT_1] = 1
+            #         self.game_matrix[card,CARD_CURR_TRICK_OPPNT_1] = 0
+
+            #     elif self.game_matrix[card,CARD_CURR_TRICK_OPPNT_2] == 1:
+            #         self.game_matrix[card,CARD_PREV_TRICK_OPPNT_2] = 1
+            #         self.game_matrix[card,CARD_CURR_TRICK_OPPNT_2] = 0
+
+            #     else:
+            #         self.game_matrix[card,CARD_PREV_TRICK_TEAM] = 1
+            #         self.game_matrix[card,CARD_CURR_TRICK_TEAM] = 0                    
 
         
 

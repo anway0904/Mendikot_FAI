@@ -54,21 +54,21 @@ Rewards:
 import numpy as np
 import random
 from MACROS import *
-import MACROS
+
 class Mendikot():
     def __init__(self) -> None:
         self.cards_deck = 52
         self.game_features = 12
         self.game_matrix = np.zeros([self.cards_deck, self.game_features])
         self.cards_per_player = 4
-        self.suits = ['S', 'H', 'C', 'D']
+        self.min_cards = ['T', 'A', 'K', 'Q']
         
     def reset(self) -> tuple[np.ndarray, str]:
         """
         Resets and starts over the game. Distributes the cards specified by self.cards_per_player. 
         Minimum 4 cards per player (10, A, K, Q) followed by J, 10, 9, 8 ... 2
         """
-        
+        self.game_matrix[]
         
     
     def step(self, action: int, player_type: int):
@@ -95,6 +95,29 @@ class Mendikot():
         
 
     def update_game(self):
-        card_count = np.sum(self.game_matrix[:,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2])
-            
-    
+        
+        current_cards = np.where(self.game_matrix[:][CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2] == 1)
+        if  len(current_cards) == 4:
+            '''
+            TRICK OVER 
+            Update the score matrix
+            '''
+            for card in current_cards:
+                if self.game_matrix[card,CARD_CURR_TRICK_AGENT] == 1:
+                    self.game_matrix[card,CARD_PREV_TRICK_AGENT] = 1
+                    self.game_matrix[card,CARD_CURR_TRICK_AGENT] = 0
+                elif self.game_matrix[card,CARD_CURR_TRICK_OPPNT_1] == 1:
+                    self.game_matrix[card,CARD_PREV_TRICK_OPPNT_1] = 1
+                    self.game_matrix[card,CARD_CURR_TRICK_OPPNT_1] = 0
+                elif self.game_matrix[card,CARD_CURR_TRICK_OPPNT_2] == 1:
+                    self.game_matrix[card,CARD_PREV_TRICK_OPPNT_2] = 1
+                    self.game_matrix[card,CARD_CURR_TRICK_OPPNT_2] = 0
+                else:
+                    self.game_matrix[card,CARD_PREV_TRICK_TEAM] = 1
+                    self.game_matrix[card,CARD_CURR_TRICK_TEAM] = 0                    
+
+        
+
+
+
+        

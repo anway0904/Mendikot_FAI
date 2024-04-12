@@ -1,3 +1,5 @@
+import numpy as np
+
 CARD_FOR_PLAYING = 0
 CARD_IN_HAND = 1
 CARD_AVAILABLE = 2
@@ -8,73 +10,13 @@ CARD_CURR_TRICK_OPPNT_2 = 6
 CARD_PREV_TRICK_AGENT = 7
 CARD_PREV_TRICK_OPPNT_1 = 8
 CARD_PREV_TRICK_TEAM = 9
-CARD_PREV_TRICK_OPPNT_1 = 10
+CARD_PREV_TRICK_OPPNT_2 = 10
 CARD_TRUMP = 11
 
-S2 = 0
-H2 = 1
-C2 = 2
-D2 = 3
 
-S3 = 4
-H3 = 5
-C3 = 6
-D3 = 7
-
-S4 = 8
-H4 = 9
-C4 = 10
-D4 = 11
-
-S5 = 12
-H5 = 13
-C5 = 14
-D5 = 15
-
-S6 = 16
-H6 = 17
-C6 = 18
-D6 = 19
-
-S7 = 20
-H7 = 21
-C7 = 22
-D7 = 23
-
-S8 = 24
-H8 = 25
-C8 = 26
-D8 = 27
-
-S9 = 28
-H9 = 29
-C9 = 30
-D9 = 31
-
-ST = 32
-HT = 33
-CT = 34
-DT = 35
-
-SJ = 36
-HJ = 37
-CJ = 38
-DJ = 39
-
-SQ = 40
-HQ = 41
-CQ = 42
-DQ = 43
-
-SK = 44
-HK = 45
-CK = 46
-DK = 47
-
-SA = 48
-HA = 49
-CA = 50
-DA = 51
+SUITS = ['S', 'H', 'C', 'D']
+CARDS = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
+CARD_IDX = np.arange(len(CARDS)*len(SUITS)).reshape(CARDS, SUITS)
 
 AGENT       = 0
 OPPONENT_1  = 1

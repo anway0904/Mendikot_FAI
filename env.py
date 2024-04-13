@@ -159,7 +159,9 @@ class Mendikot():
             # self.game_matrix[current_cards,CARD_PREV_TRICK_AGENT] = 1
             # self.game_matrix[current_cards,CARD_CURR_TRICK_AGENT] = 0
 
-            print(np.where(self.game_matrix[current_cards,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2] == 1)[0])
+            print(np.where(self.game_matrix[current_cards,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1] == 1)[0])
+            self.game_matrix[current_cards,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1] = 0
+
 
             # print(np.where(self.game_matrix[current_cards,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2] == 1) == 1[0])
             # self.game_matrix[current_cards,]

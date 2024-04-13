@@ -101,7 +101,7 @@ class Mendikot():
 
     def get_card(self, card : int):
         num, suit = np.where(CARD_IDX[:,:] == card)
-        return num[0], suit[0]
+        return (num[0], suit[0])
 
     def get_cards_in_play(self) -> tuple[int]:
         idx = np.where(self.game_matrix[:,CARD_FOR_PLAYING] == 1)[0]
@@ -139,10 +139,8 @@ class Mendikot():
         print(self.curr_trick)
 
         init_card = self.curr_trick[0]
-        num, suit = self.get_card(init_card)
-        
-        print(num, suit)
-
+        x = self.get_card(init_card)        
+        print(x[0], x[1])
 
         return 0
     

@@ -188,7 +188,7 @@ class Mendikot():
             winner_card, _ = self.get_card(winner_card_idx)
             print(f"WINNER! {winner_card}{SUITS_RENDER[self.trick_suit]}")    
         
-        
+        print(self.get_card(winner_card_idx))
         return (np.where(self.game_matrix[winner_card_idx,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1])[0][0])
     
     def get_available_cards(self, player_type: int):
@@ -253,6 +253,7 @@ class Mendikot():
             '''
             # Update Game Matrix
             winner_player = self.get_winner(current_cards)
+            
 
             # Update Previous Trick Parameters
             cols = np.where(self.game_matrix[:,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1] == 1)[1] # Returns Columns for cards from CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2

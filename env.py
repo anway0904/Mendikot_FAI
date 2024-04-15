@@ -229,7 +229,22 @@ class Mendikot():
         return np.where(self.game_matrix[:,CARD_AVAILABLE] == 1)[0]
 
     def get_game_winner(self) -> int:
-        return np.argmax(self.score_matrix[:,1])
+        self_team_10 = np.sum(self.score_matrix[[AGENT,TEAMMATE],1])
+        oppo_team_10 = np.sum(self.score_matrix[[OPPONENT_1,OPPONENT_2],1])
+
+        if self_team_10 == oppo_team_10:
+            self_team = np.sum(self.score_matrix[[AGENT,TEAMMATE],:])
+            oppo_team = np.sum(self.score_matrix[[OPPONENT_1,OPPONENT_2],:])
+            if self_team > oppo_team:
+                return AGENT
+            else:
+                return OPPONENT_1
+        else:
+            if self_team_10 > oppo_team_10:
+                return AGENT
+            else:
+                return OPPONENT_1 
+
     
     def get_reward(self, trick_winner:int, trick_with_10:int) -> int:
         if self.is_game_complete():
@@ -295,15 +310,14 @@ class Mendikot():
         self.game_matrix[:, CARD_AVAILABLE] = 0
 
         next_state = self.get_state(player_type)
-        terminated = self.is_game_complete()
+
 
         if self.is_trick_complete():
-            winner_player, winner_card, winner_suit, reward = self.evaluate_trick()  
-            print(self.is_game_complete()) 
-            
+            winner_player, winner_card, winner_suit, reward = self.evaluate_trick()
+            terminated = self.is_game_complete()
             return next_state, reward, terminated, (winner_player, winner_card, winner_suit)
         
-        return next_state
+        return next_state, None, None, (None, None, None)
 
     def update_score_and_reward(self, winner:int):
         trick_with_10 = int(self.is_ten_in_trick())

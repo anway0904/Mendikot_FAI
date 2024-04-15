@@ -26,3 +26,10 @@ TEAMMATE    = 2
 OPPONENT_2  = 3
 PLAYER_RENDER = {0:"AGENT", 1:"OPPNT1", 2:"TEAM", 3:"OPPNT2"}
 SUITS_RENDER = {'S':'♠', 'H': '♥', 'C':'♣', 'D':'♦'}
+
+REW_TRICK_WON_10    = 5
+REW_TRICK_WON       = 1
+REW_TRICK_LOST      = -1
+REW_TRICK_LOST_10   = -5
+REW_GAME_WON        = +10
+REW_GAME_LOST       = -10

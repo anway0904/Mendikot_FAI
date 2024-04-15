@@ -81,6 +81,9 @@ class Mendikot():
         # Reset the game matrix
         self.game_matrix *= 0
 
+        # Reset the score matrix
+        self.score_matrix *= 0
+
         # Set CARD_FOR_PLAYING the min cards required to play 
         self.game_matrix[CARD_IDX[self.min_cards,:].flatten(), CARD_FOR_PLAYING] = 1
         
@@ -105,10 +108,23 @@ class Mendikot():
         self.game_matrix[total_cards_in_play[3*self.cards_per_player : 4*self.cards_per_player], CARD_IN_HAND_OPPNT_2]  = 1
 
         # Randomly select the trump suit and set the CARD_TRUMP flag
+        self.update_trump()
+
+        # Get the state of the player who will play first in a game
+        state = self.get_state()
+
+        return state
+        
+
+    def update_trump(self):
+        self.game_matrix[:, CARD_TRUMP] = 0
         self.trump_suit = np.random.choice(SUITS)
         self.game_matrix[CARD_IDX[:,SUITS.index(self.trump_suit)], CARD_TRUMP] = 1
-
-        # raise NotImplementedError("Need to return state!!!!!!!!!!! Discuss what state should be")
+        
+    def reset_trick(self):
+        self.curr_trick = np.array([], dtype=int)
+        self.update_trump()
+        self.trick_suit = None
 
     def get_render_str(self, card_idx: int = None, card:str = None, suit:str = None, cards_list:list = None):
         if card_idx != None:
@@ -126,7 +142,6 @@ class Mendikot():
 
         # print(string)
         return string
-
     
     def get_card(self, card : int):
         num_idx, suit_idx = np.where(CARD_IDX[:,:] == card)
@@ -170,13 +185,13 @@ class Mendikot():
 
     def get_winner(self, cards : list[int]) -> int:
         assert (len(cards)==4) and (len(self.curr_trick)==4), "get_winner invoked when trick size != 4"
-        # print(f"Trump: {SUITS_RENDER[self.trump_suit]}")
-
+        
         idx_trumps_in_trick = self.get_trump_in_trick()
         if len(idx_trumps_in_trick) != 0:
             winner_card_idx = max(self.curr_trick[idx_trumps_in_trick])
             winner_card, _ = self.get_card(winner_card_idx)
-            print(f"WINNER! {winner_card}{SUITS_RENDER[self.trump_suit]}")
+            # print(f"WINNER! {winner_card}{SUITS_RENDER[self.trump_suit]}")
+            winner_suit = self.trump_suit
 
         else:    
             winner_card_idx = -1
@@ -186,12 +201,17 @@ class Mendikot():
                     winner_card_idx = card
 
             winner_card, _ = self.get_card(winner_card_idx)
-            print(f"WINNER! {winner_card}{SUITS_RENDER[self.trick_suit]}")    
+            winner_suit = self.trick_suit
+            # print(f"WINNER! {winner_card}{SUITS_RENDER[self.trick_suit]}")    
         
-        print(self.get_card(winner_card_idx))
-        return (np.where(self.game_matrix[winner_card_idx,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1])[0][0])
+        winner_player = np.where(self.game_matrix[winner_card_idx,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1])[0][0]
+        return winner_player, winner_card, winner_suit
     
-    def get_available_cards(self, player_type: int):
+    def get_state(self, player:int = None) -> np.ndarray:
+        available_cards = self.get_cards_in_play()
+        return self.game_matrix[available_cards, CARD_CURR_TRICK_AGENT:CARD_PREV_TRICK_OPPNT_2+1]
+
+    def get_available_cards(self, player_type: int) -> tuple[int]:
         self.game_matrix[:, CARD_AVAILABLE] = 0
         cards_in_hand = self.get_cards_in_hand(player_type)
 
@@ -208,8 +228,36 @@ class Mendikot():
 
         return np.where(self.game_matrix[:,CARD_AVAILABLE] == 1)[0]
 
-    def is_trick_empty(self):
+    def get_game_winner(self) -> int:
+        return np.argmax(self.score_matrix[:,1])
+    
+    def get_reward(self, trick_winner:int, trick_with_10:int) -> int:
+        if self.is_game_complete():
+            game_winner = self.get_game_winner()  
+            reward = REW_GAME_WON if (game_winner == AGENT or game_winner == TEAMMATE) else REW_GAME_LOST
+
+        else:
+            if trick_with_10:
+                reward = REW_TRICK_WON_10 if (trick_winner == AGENT or trick_winner == TEAMMATE) else REW_TRICK_LOST_10
+            else:
+                reward = REW_TRICK_WON if (trick_winner == AGENT or trick_winner == TEAMMATE) else REW_TRICK_LOST
+
+        return reward
+
+    def is_trick_empty(self) -> bool:
         return True if len(self.curr_trick) == 0 else False
+    
+    def is_ten_in_trick(self)-> bool:
+        return True if np.any(self.game_matrix[CARD_IDX[CARDS.index('T')],CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1]) else False
+
+    def is_trick_complete(self) -> bool:
+        return True if len(self.curr_trick) == self.num_players else False
+
+    def is_card_available(self) -> bool:
+        return True if np.any(self.game_matrix[:, CARD_AVAILABLE]) else False
+    
+    def is_game_complete(self) -> bool:
+        return True if np.sum(self.score_matrix, dtype=int) == self.cards_per_player else False
     
     def step(self, action: int, player_type: int):
         '''
@@ -220,7 +268,9 @@ class Mendikot():
             a. card choosen 
             b. previously choosen card -> update its status - not sure
         '''
-        assert np.any(self.game_matrix[:, CARD_AVAILABLE]), "Please call get_available_cards() first"
+        assert self.is_card_available(), "Please call get_available_cards() first"
+        assert not self.is_game_complete(), "Please reset the game"
+
         if self.is_trick_empty():
             _, self.trick_suit = self.get_card(action)
 
@@ -243,24 +293,37 @@ class Mendikot():
             self.game_matrix[action, CARD_IN_HAND_TEAM] = 0
 
         self.game_matrix[:, CARD_AVAILABLE] = 0
-    
-    def evaluate_trick(self):
+
+        next_state = self.get_state(player_type)
+        terminated = self.is_game_complete()
+
+        if self.is_trick_complete():
+            winner_player, winner_card, winner_suit, reward = self.evaluate_trick()  
+            print(self.is_game_complete()) 
+            
+            return next_state, reward, terminated, (winner_player, winner_card, winner_suit)
+        
+        return next_state
+
+    def update_score_and_reward(self, winner:int):
+        trick_with_10 = int(self.is_ten_in_trick())
+        self.score_matrix[winner, trick_with_10] += 1
+        reward = self.get_reward(winner, trick_with_10)
+        return reward
+
+    def evaluate_trick(self) -> int:
         current_cards = self.get_cards_in_trick()
-        if  len(current_cards) == 4:
-            '''
-            TRICK OVER 
-            Update the score matrix
-            '''
-            # Update Game Matrix
-            winner_player = self.get_winner(current_cards)
-            
+        # Get the winner and update score
+        winner_player, winner_card, winner_suit = self.get_winner(current_cards)
+        reward = self.update_score_and_reward(winner_player)
 
-            # Update Previous Trick Parameters
-            cols = np.where(self.game_matrix[:,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1] == 1)[1] # Returns Columns for cards from CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2
-            cols += CARD_PREV_TRICK_AGENT
-            self.game_matrix[current_cards,cols] = 1
-            
-            # Update Current Trick Parameters
-            self.game_matrix[:,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1] = 0
-
-            return winner_player
+        # Update Previous Trick Parameters
+        cols_curr_trick = np.where(self.game_matrix[:,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1] == 1)[1] # Returns Columns for cards from CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2
+        cols_curr_trick += CARD_PREV_TRICK_AGENT
+        self.game_matrix[current_cards, cols_curr_trick] = 1
+        
+        # Update Current Trick Parameters
+        self.game_matrix[:,CARD_CURR_TRICK_AGENT:CARD_CURR_TRICK_OPPNT_2+1] = 0
+        
+        self.reset_trick()
+        return winner_player, winner_card, winner_suit, reward 

@@ -123,7 +123,7 @@ class Mendikot():
         
     def reset_trick(self):
         self.curr_trick = np.array([], dtype=int)
-        self.update_trump()
+        # self.update_trump()
         self.trick_suit = None
 
     def get_render_str(self, card_idx: int = None, card:str = None, suit:str = None, cards_list:list = None):

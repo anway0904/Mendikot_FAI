@@ -209,7 +209,7 @@ class Mendikot():
     
     def get_state(self, player:int = None) -> np.ndarray:
         available_cards = self.get_cards_in_play()
-        return self.game_matrix[available_cards, CARD_CURR_TRICK_AGENT:CARD_TRUMP+1]
+        return self.game_matrix[available_cards, CARD_CURR_TRICK_AGENT:CARD_PREV_TRICK_OPPNT_2+1]
 
     def get_available_cards(self, player_type: int) -> tuple[int]:
         self.game_matrix[:, CARD_AVAILABLE] = 0

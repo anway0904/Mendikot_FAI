@@ -41,11 +41,12 @@ if __name__ == "__main__":
     m = env.Mendikot(cards_per_player=4)
     
     # Define state and action dimensions based on your environment
-    state_dim = env.state_dim
-    action_dim = env.action_dim
+    state_dim = m.get_state()
+    print(state_dim)
+    # action_dim = env.action_dim
     
     # Initialize function approximator
-    function_approximator = LinearFunctionApproximator(state_dim, action_dim)
+    # function_approximator = LinearFunctionApproximator(state_dim, action_dim)
     
-    # Train the agent
-    train_agent(m, function_approximator, num_episodes=1000)
+    # # Train the agent
+    # train_agent(m, function_approximator, num_episodes=1000)

@@ -107,6 +107,9 @@ class Mendikot():
         self.game_matrix[total_cards_in_play[2*self.cards_per_player : 3*self.cards_per_player], CARD_IN_HAND_TEAM]     = 1
         self.game_matrix[total_cards_in_play[3*self.cards_per_player : 4*self.cards_per_player], CARD_IN_HAND_OPPNT_2]  = 1
 
+        # Reset the trick
+        self.reset_trick()
+        
         # Randomly select the trump suit and set the CARD_TRUMP flag
         self.update_trump()
 
@@ -244,7 +247,6 @@ class Mendikot():
                 return AGENT
             else:
                 return OPPONENT_1 
-
     
     def get_reward(self, trick_winner:int, trick_with_10:int) -> int:
         if self.is_game_complete():
@@ -310,7 +312,6 @@ class Mendikot():
         self.game_matrix[:, CARD_AVAILABLE] = 0
 
         next_state = self.get_state(player_type)
-
 
         if self.is_trick_complete():
             winner_player, winner_card, winner_suit, reward = self.evaluate_trick()

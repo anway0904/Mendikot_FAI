@@ -33,3 +33,5 @@ REW_TRICK_LOST      = -1
 REW_TRICK_LOST_10   = -5
 REW_GAME_WON        = +10
 REW_GAME_LOST       = -10
+
+GAME_PLAYERS = 4

@@ -40,6 +40,7 @@ def main():
 
             else:
                 choice = np.random.choice(m.get_available_cards(player))
+                print(choice)
 
 
             render_str = m.get_render_str(card_idx=choice)

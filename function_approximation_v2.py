@@ -11,7 +11,7 @@ class FunctionApproximator:
         self.learning_rate = learning_rate
         self.epsilon = epsilon
         self.discount_factor = discount_factor
-        self.init_agent_cards = None
+        self.init_agent_cards = m.get_cards_in_play()
     
     def predict(self, state):
         vect = np.dot(self.weights, state.flatten())
@@ -20,7 +20,6 @@ class FunctionApproximator:
     def update(self, state, action, target):
         # print(action)
         action_index = np.where(action == self.init_agent_cards)[0][0]
-        # print(action_index)
         self.weights[action_index,:] += self.learning_rate * (target - self.predict(state)[action_index]) * state.flatten()
 
     def epsilon_greedy_policy(self, state):
@@ -32,9 +31,12 @@ class FunctionApproximator:
             return action
         else:
             available_cards = self.m.get_available_cards(AGENT)
+            # print(self.init_agent_cards)
             mask = np.isin(self.init_agent_cards ,available_cards) 
             pred_array = self.predict(state)
-            action = int(np.argmin(pred_array[mask]))
+            # print(pred_array)
+            # print(mask)
+            action = int(np.argmax(pred_array[mask]))
             return self.init_agent_cards[action]
 
     def step_agent(self, state):
@@ -77,6 +79,7 @@ class FunctionApproximator:
         players = [AGENT, OPPONENT_1, TEAMMATE, OPPONENT_2]
         episode_rewards = 0
         rewards = []
+        game_won_by_agent = 0
         
         for episode in trange(num_episodes):
             
@@ -89,23 +92,26 @@ class FunctionApproximator:
             done = False
             
 
-            self.init_agent_cards = self.m.get_cards_in_hand(AGENT)
+            self.init_agent_cards = self.m.get_cards_in_play()
             
             while not done:
 
                 next_state, reward, done, agent_action = self.step_agent(state)
-                # print(reward)
+                if int(reward) == -10:
+                    game_won_by_agent += 1
+
                 td_target = reward + self.discount_factor * np.max(self.predict(next_state))
                 
                 self.update(state=state,action=agent_action,target=td_target)
 
                 state = next_state
-                episode_rewards += reward
+                # episode_rewards += reward
+                rewards.append(reward)
 
-            rewards.append(episode_rewards)
+            
             # print(f"Episode {episode} Rewards : {episode_rewards}")
-            episode_rewards = 0
-
+            # episode_rewards = 0
+        print(game_won_by_agent)
         return rewards, self.weights
 
 
@@ -115,15 +121,21 @@ if __name__ == "__main__":
     _ = m.reset()
     
     state_dim = m.get_state().flatten().shape[0]
-    action_dim = m.cards_per_player
-    # print(action_dim)
+    action_dim = m.get_cards_in_play().shape[0]
+    print(action_dim)
     
     # Initialize function approximator
-    function_approximator = FunctionApproximator(m, state_dim, action_dim,discount_factor=0.99, epsilon=0.1,learning_rate=0.1)
+    function_approximator = FunctionApproximator(m, state_dim, action_dim,discount_factor=1, epsilon=0.01,learning_rate=0.01)
     
     # # Train the agent
     rewards, weights = function_approximator.train_agent(num_episodes=100000)
 
     # print(weights[0].reshape(9,16))
-    plt.plot(rewards)
+    
+    rewards = np.array(rewards)
+    rewards = rewards * -1
+    plt.title("Reward Distribution")
+    plt.xlabel("Rewards")
+    plt.ylabel("Frequency")
+    plt.hist(rewards)
     plt.show()

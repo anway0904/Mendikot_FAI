@@ -104,8 +104,13 @@ if __name__ == "__main__":
     function_approximator = LinearFunctionApproximator(state_dim, action_dim)
     
     # # Train the agent
-    rewards, weights = train_agent(m, function_approximator, num_episodes=10000)
+    rewards, weights = train_agent(m, function_approximator, num_episodes=100000)
 
+    rewards = np.array(rewards)
+    rewards = rewards * -1
     # print(weights[0].reshape(9,16))
     plt.hist(rewards)
+    plt.title("Reward Distribution")
+    plt.xlabel("Rewards")
+    plt.ylabel("Frequency")
     plt.show()
